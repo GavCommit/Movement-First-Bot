@@ -1,0 +1,20 @@
+from aiogram.fsm.state import State, StatesGroup
+
+class ActiveState(StatesGroup):
+    auth_wait_pswd = State()
+    main_menu = State()
+    my_data_menu = State()
+    new_user_registration = State()
+    my_data_edit = State()
+    projects_menu = State()
+    editing_parm_user_data = State()
+    waiting_for_photos = State()
+    waiting_for_message_to_mods = State()
+    waiting_for_message_to_user = State()
+    waiting_for_name_of_the_project = State()
+    waiting_for_notification = State()
+    editing_menu_project = State()
+    editing_project_parm = State()
+    editing_project_photo = State()
+    confirmation_project_ending = State()
+    waiting_random_members_count = State()

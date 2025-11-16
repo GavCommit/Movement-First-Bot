@@ -1,0 +1,32 @@
+# Файлы конфигурации с чувствительными данными
+config.py
+.env
+
+# Медиа файлы
+media/*
+
+# Файлы баз данных (не коммитить актуальные данные)
+users.json
+projects.json
+
+# Питон кэш
+pycache/
+*.py[cod]
+*$py.class
+__pycache__
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+uv.lock
+pyproject.toml
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.temp
+
