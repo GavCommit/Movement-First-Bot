@@ -901,8 +901,10 @@ async def send_notification(callback: CallbackQuery, state: FSMContext, bot: Bot
             try:
                 await bot.send_message(
                     chat_id=member_id,
-                    text=f"📢 <b>Оповещение от проекта:</b> {display_name}\n\n{notification}",
-                    reply_markup=await get_back_to_main_menu_kb(),
+                    text=f"📢 <b>Оповещение от проекта:</b> {display_name}\n\n{notification}",reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text='🔙 К проекту', callback_data=f"PROJECT:::{category}:::{project_id}")],
+                        [InlineKeyboardButton(text='🔙 В главное меню.', callback_data="back_to_main")]
+                    ]),
                     parse_mode="HTML"
                 )
                 sent_to_users += 1
@@ -911,9 +913,7 @@ async def send_notification(callback: CallbackQuery, state: FSMContext, bot: Bot
         
         await callback.message.edit_text(
             f"✅ Сообщение отправлено {sent_to_users} участникам проекта <b>{display_name}</b>",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text='🔙 К проекту', callback_data=f"PROJECT:::{category}:::{project_id}")]
-            ]),
+            
             parse_mode="HTML"
         )
     else:
