@@ -22,6 +22,8 @@ env/
 uv.lock
 pyproject.toml
 
+test_py.py
+
 # Логи
 *.log
 logs/
@@ -31,6 +33,7 @@ logs/
 *.temp
 
 
+test.py
 test.py
 
 TODO

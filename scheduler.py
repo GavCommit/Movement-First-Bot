@@ -57,11 +57,11 @@ async def timer():
         now = datetime.datetime.now()
         
         # Ежедневно в 12:00 - проверка завершенных проектов
-        if now.hour == 12 and now.minute == 0 and now.second < 10:
+        if now.hour == 12 and now.minute == 0 and now.second < 30:
             await check_completed_projects()
         
         # Ежедневно в 10:00 - запрос на удаление старых проектов
-        if now.hour == 10 and now.minute == 0 and now.second < 10:
+        if now.hour == 10 and now.minute == 0 and now.second < 30:
             await ask_for_removing_old_projects()
         
         await asyncio.sleep(POLLING_TIMEOUT)
