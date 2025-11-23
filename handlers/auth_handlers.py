@@ -125,15 +125,22 @@ async def consent_button_handler(callback: CallbackQuery, state: FSMContext):
         success = await save_user_consent(user_id)
         if success:
             from services import check_new_user
-            
-            await callback.message.edit_text(
+            if await check_new_user(user_id): # Новый пользователь
+
+                await callback.message.edit_text(
                 "✔️ Условия приняты",
                 reply_markup = None
-            )
-            if await check_new_user(user_id):
+                )
                 await state.set_state(ActiveState.new_user_registration)
                 await callback.message.answer("Введите Ваше имя:")
-        await callback.answer()                
+                await callback.answer() 
+            else:
+                from keyboards import get_main_menu_kb
+                await callback.message.edit_text(
+                "✔️ Условия приняты",
+                reply_markup = await get_main_menu_kb()
+                )
+                      
     else:
         from services import remove_user
 
