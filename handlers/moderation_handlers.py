@@ -85,7 +85,7 @@ async def perform_user_search(message: Message, search_query: str, max_results: 
             'name': user_data.get('name', '').lower(), 
             'surname': user_data.get('surname', '').lower(),
             'IDfirst': user_data.get('IDfirst', '').lower(),
-            'phone': user_data.get('phone', '').lower()
+            'phone': user_data.get('phone', '').strip(NON_DISPLAY_CHARACTER).lower()
         }
         
         exact_match = False

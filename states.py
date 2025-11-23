@@ -6,6 +6,7 @@ class ActiveState(StatesGroup):
     my_data_menu = State()
     new_user_registration = State()
     my_data_edit = State()
+    confirming_phone = State()
     projects_menu = State()
     editing_parm_user_data = State()
     waiting_for_photos = State()
