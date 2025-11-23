@@ -135,11 +135,11 @@ async def consent_button_handler(callback: CallbackQuery, state: FSMContext):
                 await callback.message.answer("Введите Ваше имя:")
                 await callback.answer() 
             else:
-                from keyboards import get_main_menu_kb
                 await callback.message.edit_text(
                 "✔️ Условия приняты",
-                reply_markup = await get_main_menu_kb()
+                reply_markup = None
                 )
+                await main_menu(message, state)
                       
     else:
         from services import remove_user
