@@ -90,7 +90,7 @@ async def my_data_edit_parms(callback: CallbackQuery, state: FSMContext):
     parms_translate = {
         "name": "имя пользователя",
         "surname": "фамилию пользователя", 
-        "IDfirst": "ID с сайта движения первых пользователя",
+        "IDfirst": "ID с <a href='https://id.pervye.ru/account/board'>cайта движения первых</a> пользователя",
         "phone": "номер телефона пользователя",
         "score": "количество баллов пользователя",
         "username": "username пользователя",
@@ -108,12 +108,14 @@ async def my_data_edit_parms(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.edit_text(
         f"Введите {parms_translate[parm]}:",
-        reply_markup=markup
+        reply_markup=markup,
+        parse_mode="HTML"
+
     )
    
     await state.set_state(ActiveState.editing_parm_user_data)
     await state.update_data(editing_parm=parm, user_id=user_id)
-    callback.answer()
+    await callback.answer()
 
 @router.message(ActiveState.editing_parm_user_data)
 async def my_data_parm_editing(message: Message, state: FSMContext):
