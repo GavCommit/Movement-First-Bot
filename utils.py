@@ -124,7 +124,7 @@ async def show_consent_agreement(message, state):
 
     await message.answer(
         consent_text,
-        reply_markup=get_consent_keyboard(),
+        reply_markup=await get_consent_keyboard(),
         parse_mode="HTML"
     )
 

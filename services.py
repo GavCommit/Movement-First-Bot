@@ -342,17 +342,17 @@ async def is_user_banned(user_id: str) -> bool:
 
 async def save_user_consent(user_id: str) -> bool:
     """Сохраняем факт согласия пользователя"""
-    try:
-        data = read_json_file(PATH_TO_USERS_FILE)
+    #try:
+    data = read_json_file(PATH_TO_USERS_FILE)
+    from datetime import datetime
+    if user_id in data:
+        data[user_id]["consent_accepted"] = datetime.now().isoformat()
         
-        if user_id in data:
-            data[user_id]["consent_accepted"] = datetime.now().isoformat()
-            
-            write_json_file(PATH_TO_USERS_FILE, data)
-            return True
-        return False
-    except Exception as e:
-        return False
+        write_json_file(PATH_TO_USERS_FILE, data)
+        return True
+    return False
+    #except Exception as e:
+    #    return False
 
 async def check_new_user(user_id: str) -> bool:
     """Определяем нового пользователя"""
@@ -362,6 +362,7 @@ async def check_new_user(user_id: str) -> bool:
         if user_id in data:
             if data[user_id]["name"] == "Не указано":
                 return True
+
         return False
     except Exception as e:
         return False

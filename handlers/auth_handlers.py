@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 
 from config import API_TELEGRAM, SCHOOL_AUTH_PSWD, PATH_TO_USERS_FILE
 from states import ActiveState
-from utils import read_json_file, write_json_file, check_authorization, send_not_authorized, check_user_consent
+from utils import read_json_file, write_json_file
 from keyboards import get_main_menu_kb
 from services import get_user_data, update_user_data, save_user_consent
 
@@ -17,17 +17,20 @@ router = Router()
 async def start(message: Message, state: FSMContext):
     user_id = str(message.from_user.id)
     
-    # ✅ Проверяем не забанен ли пользователь
     from services import is_user_banned
     if await is_user_banned(user_id):
         await message.answer("❌ Вы были заблокированы администрацией бота ❌")
         return
-    
+    from utils import check_authorization
     if not await check_authorization(user_id):
+        from utils import send_not_authorized
         await send_not_authorized(message, state)
         return   
 
+    from utils import check_user_consent
     if not await check_user_consent(user_id):
+        from utils import show_consent_agreement
+        await show_consent_agreement(message=message, state=state)
         return
     
     await state.clear()
@@ -117,15 +120,14 @@ async def main_menu(message: Message, state: FSMContext):
     )
 
 @router.callback_query(F.data.startswith("CONSENT"))
-async def report_menu(callback: CallbackQuery, state: FSMContext):
-    if not await check_authorization(callback.from_user.id):
-        return
-    
+async def consent_button_handler(callback: CallbackQuery, state: FSMContext):
+    """Обработчик кнопок согласия пользователей"""
     action = F.data.split(":::")[1]
+    user_id = str(callback.from_user.id)
 
     if action == "ACCEPTED":
         #принята
-        success = await save_user_consent(callback.from_user.id)
+        success = await save_user_consent(user_id)
         if success:
             from services import check_new_user
             
@@ -133,13 +135,14 @@ async def report_menu(callback: CallbackQuery, state: FSMContext):
                 "✔️ Условия приняты",
                 reply_markup = None
             )
-            if await check_new_user(callback.from_user.id):
+            if await check_new_user(user_id):
                 await state.set_state(ActiveState.new_user_registration)
                 await callback.message.answer("Введите Ваше имя:")
+        await callback.answer()                
     else:
         from services import remove_user
 
-        await remove_user(callback.from_user.id)
+        await remove_user(user_id)
         await callback.message.edit_text(
                 "❌ Условия не приняты.\n\nРегистрация прервана. Введите код школы для повторной регистрации:",
                 reply_markup = None
