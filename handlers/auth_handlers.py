@@ -119,7 +119,7 @@ async def new_user_registration(message: Message, state: FSMContext):
             success = await update_user_data(user_id, "IDfirst", value_only_digits)
             if success:
                 await message.answer(
-                    "✅ ID сохранен успешно ✅\nРегистрация окончена!"
+                    "✅ ID сохранен успешно ✅\n*Не забудь подтвердить свой номер телефона в меню \'Мои данные\'\nРегистрация окончена!"
                 )
             from config import GREETING_TEXT
             await message.answer(GREETING_TEXT)
