@@ -22,7 +22,9 @@ def check_config():
         'USER_IN_LEADERBOARD',
         'MEMBERS_IN_MEMBERSLIST',
         'NOT_AUTHORIZED_MESSAGE',
-        'NOT_MODERATOR_MESSAGE'
+        'NOT_MODERATOR_MESSAGE',
+        'CONSENT_TEXT',
+        'GREETING_TEXT'
     ]
     
     missing_vars = []
