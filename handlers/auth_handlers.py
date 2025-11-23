@@ -139,7 +139,7 @@ async def consent_button_handler(callback: CallbackQuery, state: FSMContext):
                 "✔️ Условия приняты",
                 reply_markup = None
                 )
-                await main_menu(message, state)
+                await main_menu(callback.message, state)
                       
     else:
         from services import remove_user
