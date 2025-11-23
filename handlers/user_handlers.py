@@ -18,7 +18,7 @@ async def my_data_menu(callback: CallbackQuery, state: FSMContext):
         return
     
     from utils import check_user_consent
-    if not await check_user_consent(user_id):
+    if not await check_user_consent(callback.from_user.id):
         from utils import show_consent_agreement
         await show_consent_agreement(message=message, state=state)
         return
