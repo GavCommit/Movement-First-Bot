@@ -18,13 +18,25 @@ async def get_back_to_main_menu_kb():
         ]
     )
 
-async def get_my_data_menu_kb():
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text='✏️ Редактировать', callback_data="menu_my_data_edit")],
-            [InlineKeyboardButton(text='🔙 Назад', callback_data="back_to_main")]
-        ]
-    )
+async def get_my_data_menu_kb(user_id: str = None):
+    from utils import read_json_file
+    from config import PATH_TO_USERS_FILE
+
+    
+    kb = []
+    if user_id:
+        users_data = read_json_file(PATH_TO_USERS_FILE)
+        user_data = users_data.get(str(user_id), {})
+        phone = user_data.get("phone", "Не указано")
+        
+        if phone.startswith(NON_DISPLAY_CHARACTER):
+            kb.append([InlineKeyboardButton(text='✅ Подтвердить телефон', callback_data="confirm_phone_main")])
+    kb.extend([
+        [InlineKeyboardButton(text='✏️ Редактировать', callback_data="menu_my_data_edit")],
+        [InlineKeyboardButton(text='🔙 Назад', callback_data="back_to_main")]
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=kb)
 
 async def get_projects_menu_kb():
     return InlineKeyboardMarkup(

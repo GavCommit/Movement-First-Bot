@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-from config import API_TELEGRAM, SCHOOL_AUTH_PSWD, PATH_TO_USERS_FILE
+from config import API_TELEGRAM, SCHOOL_AUTH_PSWD, PATH_TO_USERS_FILE, NON_DISPLAY_CHARACTER
 from states import ActiveState
 from utils import read_json_file, write_json_file
 from keyboards import get_main_menu_kb
@@ -90,19 +90,44 @@ async def new_user_registration(message: Message, state: FSMContext):
         success = await update_user_data(user_id, "name", new_value)
         if success:
             await message.answer(
-                "✅ Имя сохранено успешно ✅\nВведите вашу фамилию:"
+                "✅ Имя сохранено успешно ✅\nВведите Вашу фамилию:"
             )
 
     elif user_data.get("surname") == "Не указано":
         success = await update_user_data(user_id, "surname", new_value)
         if success:
             await message.answer(
-                "✅ Фамилия сохранена успешно ✅\nРегистрация окончена!"
+                "✅ Фамилия сохранена успешно ✅\nВведите ваш номер телефона:"
             )
-            
+    elif user_data.get("phone") == "Не указано":
+        from utils import phone_number_validating
+        valid_number = await phone_number_validating(new_value)
+        if not valid_number:
+            await message.answer("❌ Некорректный номер телефона.")
+            await state.set_state(ActiveState.new_user_registration)
+            return  
+        else:
+            success = await update_user_data(user_id, "phone", NON_DISPLAY_CHARACTER+valid_number)
+            if success:
+                await message.answer(
+                    "✅ Телефон сохранен успешно ✅\nВведите Ваше ID <a href='https://id.pervye.ru/account/board'>cайта движения </a>:",
+                    parse_mode="HTML"
+                )
+    elif user_data.get("IDfirst") == "Не указано":
+        value_only_digits = ''.join(filter(lambda x: x.isdigit(), new_value))
+        if len(value_only_digits) == len(new_value.strip()) == 8:
+            success = await update_user_data(user_id, "IDfirst", value_only_digits)
+            if success:
+                await message.answer(
+                    "✅ ID сохранен успешно ✅\nНе забудь подтвердить свой номер телефона в меню \'Мои данные\'\nРегистрация окончена!"
+                )
             from config import GREETING_TEXT
             await message.answer(GREETING_TEXT)
             await main_menu(message, state)
+            return
+        else:
+            await message.answer("❌ Некорректный ID первых. Он должен быть длинной 8.")
+            return            
     else:
         return
 

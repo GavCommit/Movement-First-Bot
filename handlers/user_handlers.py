@@ -1,10 +1,10 @@
 import json
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
-from config import PATH_TO_USERS_FILE, PATH_TO_PROJECTS_FILE, MEMBERS_IN_MEMBERSLIST, USER_IN_LEADERBOARD
+from config import PATH_TO_USERS_FILE, PATH_TO_PROJECTS_FILE, MEMBERS_IN_MEMBERSLIST, USER_IN_LEADERBOARD, NON_DISPLAY_CHARACTER
 from states import ActiveState
 from utils import read_json_file, check_authorization, is_moderator, phone_number_validating, send_not_moderator, get_leaderboard
 from services import get_user_data, update_user_data, get_leaderboard_data
@@ -40,18 +40,18 @@ async def my_data_menu(callback: CallbackQuery, state: FSMContext):
             category, project_id = project.split(":::")
             project_name = f'{index}. {data_pr.get(category, {}).get(project_id, {}).get("name", "Не найден")}\n'
             active_projects += project_name
-
+    phone = user_data['phone'][len(NON_DISPLAY_CHARACTER):]+" ❗" if user_data['phone'].startswith(NON_DISPLAY_CHARACTER) else user_data['phone']+" ✅"
     await callback.message.edit_text(
         f"👤 <b>Ваши данные:</b>\n\n"
         f"📝 Имя пользователя: @{user_data['username']}\n"
         f"😎 Имя: {user_data['name']}\n"
         f"😄 Фамилия: {user_data['surname']}\n"
         f"📝ID Первых: {user_data['IDfirst']}\n"
-        f"📞 Телефон: {user_data['phone']}\n"
+        f"📞 Телефон: {phone}\n"
         f"⭐ Баллы: {user_data['score']}\n"
         f"🔄 Активные проекты: {active_projects}\n"
         f"✅ Завершенные проекты: {user_data['completed_projects']}\n",
-        reply_markup=await get_my_data_menu_kb(),
+        reply_markup=await get_my_data_menu_kb(user_id=user_id),
         parse_mode="HTML"
     )
 
@@ -67,7 +67,7 @@ async def menu_my_data_edit(callback: CallbackQuery, state: FSMContext):
             [InlineKeyboardButton(text=f"😎 Имя: {user_data['name']}", callback_data=f"user_edit_parm:::name:::{user_id}")],
             [InlineKeyboardButton(text=f"😄 Фамилия: {user_data['surname']}", callback_data=f"user_edit_parm:::surname:::{user_id}")],
             [InlineKeyboardButton(text=f"⭐ID Первых: {user_data['IDfirst']}", callback_data=f"user_edit_parm:::IDfirst:::{user_id}")],
-            [InlineKeyboardButton(text=f"📞Телефон: {user_data['phone']}", callback_data=f"user_edit_parm:::phone:::{user_id}")],
+            [InlineKeyboardButton(text=f"📞Телефон: {user_data['phone'].strip(NON_DISPLAY_CHARACTER)}", callback_data=f"user_edit_parm:::phone:::{user_id}")],
             [InlineKeyboardButton(text='🔙 Назад', callback_data="menu_my_data")]
         ]
     )
@@ -90,7 +90,7 @@ async def my_data_edit_parms(callback: CallbackQuery, state: FSMContext):
     parms_translate = {
         "name": "имя пользователя",
         "surname": "фамилию пользователя", 
-        "IDfirst": "ID с сайта движения первых пользователя",
+        "IDfirst": "ID с <a href='https://id.pervye.ru/account/board'>cайта движения первых</a> пользователя",
         "phone": "номер телефона пользователя",
         "score": "количество баллов пользователя",
         "username": "username пользователя",
@@ -108,12 +108,14 @@ async def my_data_edit_parms(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.edit_text(
         f"Введите {parms_translate[parm]}:",
-        reply_markup=markup
+        reply_markup=markup,
+        parse_mode="HTML"
+
     )
    
     await state.set_state(ActiveState.editing_parm_user_data)
     await state.update_data(editing_parm=parm, user_id=user_id)
-    callback.answer()
+    await callback.answer()
 
 @router.message(ActiveState.editing_parm_user_data)
 async def my_data_parm_editing(message: Message, state: FSMContext):
@@ -135,7 +137,7 @@ async def my_data_parm_editing(message: Message, state: FSMContext):
         if parm == "phone":
             valid_number = await phone_number_validating(new_value)
             if valid_number:
-                new_value = valid_number
+                new_value = NON_DISPLAY_CHARACTER+valid_number
             else:
                 await message.answer("❌ Некорректный номер телефона.", reply_markup=markup)
                 return
@@ -312,3 +314,103 @@ async def editing_user_parms(message, user_id: str, update_message: bool = None)
             await message.edit_text(text, reply_markup=markup, parse_mode="HTML")
         except:
             await message.answer(text, reply_markup=markup, parse_mode="HTML")
+
+
+@router.callback_query(F.data == "confirm_phone_main")
+async def confirm_phone_from_main_menu(callback: CallbackQuery, state: FSMContext):
+    """Обработчик кнопки подтверждения телефона из главного меню 'Мои данные'"""
+    user_id = str(callback.from_user.id)
+    
+    user_data = await get_user_data(user_id)
+    current_phone = user_data.get("phone", "Не указано")
+    
+    from config import NON_DISPLAY_CHARACTER
+    if not current_phone.startswith(NON_DISPLAY_CHARACTER):
+        await callback.answer("✅ Ваш номер уже подтвержден")
+        return
+    
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text="📱 Подтвердить номер телефона",
+                    request_contact=True
+                )
+            ]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    
+    await state.set_state(ActiveState.confirming_phone)
+    await state.update_data(confirming_user_id=user_id, current_phone=current_phone)
+    
+    await callback.message.answer(
+        f"📱 <b>Подтверждение номера телефона</b>\n\n"
+        f"Текущий номер: {current_phone[len(NON_DISPLAY_CHARACTER):]}\n"
+        f"Статус: ❌ Не подтвержден\n\n"
+        f"Для подтверждения нажмите кнопку ниже ↓",
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
+
+@router.message(ActiveState.confirming_phone, F.contact)
+async def handle_phone_confirmation(message: Message, state: FSMContext):
+    """Обрабатывает подтверждение номера телефона через контакт"""
+    state_data = await state.get_data()
+    user_id = state_data.get('confirming_user_id', "")
+    current_phone = state_data.get('current_phone', "")
+    
+    if not user_id:
+        await message.answer("❌ Ошибка: пользователь не найден", reply_markup=ReplyKeyboardRemove())
+        await message.answer(
+            "Вернуться в главное меню",
+            reply_markup=await get_back_to_main_menu_kb()
+        )
+        return
+    
+    contact = message.contact
+    
+    if contact.user_id != message.from_user.id:
+        await message.answer(
+            "❌ Пожалуйста, поделитесь своим номером телефона",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await message.answer(
+            "Вернуться в главное меню",
+            reply_markup=await get_back_to_main_menu_kb()
+        )
+        return
+    
+    phone_number = contact.phone_number
+    formatted_contact_phone = await phone_number_validating(phone_number)
+    current_phone = current_phone.strip(NON_DISPLAY_CHARACTER)
+    
+    if not formatted_contact_phone == current_phone:
+        await message.answer(
+            f"❌ Номера телефона не совпадают, укажите свой({formatted_contact_phone}) номер телефона",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await message.answer(
+            "Вернуться в главное меню",
+            reply_markup=await get_back_to_main_menu_kb()
+        )
+        return
+   
+    success = await update_user_data(user_id, "phone", current_phone)
+    
+    if success:
+        await message.answer(
+            "✅ <b>Номер телефона успешно подтвержден!</b>",
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode="HTML"
+        )
+    else:
+        await message.answer(
+            "❌ Ошибка при подтверждении номера телефона",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    await message.answer(
+            "Вернуться в главное меню",
+            reply_markup=await get_back_to_main_menu_kb()
+        )
