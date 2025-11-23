@@ -48,7 +48,7 @@ async def authorization(message: Message, state: FSMContext):
     
     if message.text == str(SCHOOL_AUTH_PSWD):
         user_profile = {     #Создание нового ПУСТОГО пользователя 
-            "username": "Не указано",
+            "username": message.from_user.username or "Не указано",
             "name": "Не указано", 
             "surname": "Не указано",
             "IDfirst": "Не указано",
@@ -66,6 +66,8 @@ async def authorization(message: Message, state: FSMContext):
         await message.answer(
                 "✅ Код школы указан успешно ✅"
             )
+
+        from utils import show_consent_agreement
         await show_consent_agreement()            
         return
     else:
