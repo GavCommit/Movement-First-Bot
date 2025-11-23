@@ -36,7 +36,7 @@ async def main():
     # Start scheduler
     asyncio.create_task(timer())
     
-    #logger.info("Bot started successfully")
+    logger.info("Bot started successfully")
     
     # Start polling
     await dp.start_polling(bot)
